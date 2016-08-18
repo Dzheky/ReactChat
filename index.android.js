@@ -5,49 +5,35 @@
  */
 
 import React, { Component } from 'react';
-import {
-  AppRegistry,
-  StyleSheet,
-  Text,
-  View
-} from 'react-native';
+import {AppRegistry, Text, View} from 'react-native'
+import {Container, Content, Header, InputGroup, Input, Icon, Button  } from 'native-base';
 
 class reactChat extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {text: '',
+                  textToInput: ''};
+    this.buttonPress = this.buttonPress.bind(this);
+  }
+  buttonPress() {
+    this.setState({textToInput: this.state.text});
+  }
   render() {
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to React Native!
-        </Text>
-        <Text style={styles.instructions}>
-          To get started, edit index.android.js
-        </Text>
-        <Text style={styles.instructions}>
-          Double tap R on your keyboard to reload,{'\n'}
-          Shake or press menu button for dev menu
-        </Text>
-      </View>
+      <Container>
+          <Content>
+              <InputGroup borderType='underline'>
+                  <Icon name="ios-home" style={{color:'#384850'}}/>
+                  <Input onChangeText={(text) => this.setState({text})} placeholder="Введите сообщение..."/>
+              </InputGroup>
+              <Button onPress={this.buttonPress}success>Отправить</Button>
+              <Text style={{padding: 10, fontSize: 42}}>
+                  {this.state.textToInput}
+              </Text>
+          </Content>
+      </Container>
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
 
 AppRegistry.registerComponent('reactChat', () => reactChat);
