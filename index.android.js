@@ -15,6 +15,7 @@ import { Container, Content, Header, InputGroup, Input, Icon, Button } from 'nat
 import { Col, Row, Grid } from "react-native-easy-grid";
 import './UserAgent';
 import io from 'socket.io-client/socket.io';
+import strftime from 'strftime';
 
 const dismissKeyboard = require('dismissKeyboard')
 
@@ -36,14 +37,15 @@ class reactChat extends Component {
       dataSource: this.ds.cloneWithRows([welcomeMessage])
     };
     this.buttonPress = this.buttonPress.bind(this);
-    this.getJSON = this.getJSON.bind(this);
+    // this.getJSON = this.getJSON.bind(this);
     this.addMessage = this.addMessage.bind(this);
     this.socket.on('message', this.addMessage);
+    this.formatDate = this.formatDate.bind(this);
   }
 
-  componentWillMount() {
-    // this.getJSON(this.state.serverLink);
-  }
+  // componentWillMount() {
+  //   this.getJSON(this.state.serverLink);
+  // }
 
   addMessage(message) {
     let localMessages = [
@@ -57,19 +59,19 @@ class reactChat extends Component {
     this.listView.scrollTo({ y: localMessages.length * 50 });
   }
 
-  getJSON() {
-    return fetch(this.state.serverLink)
-            .then((messages) => {
-              messages = JSON.parse(messages._bodyInit);
-              this.setState({
-                textToInput: messages,
-                dataSource: this.ds.cloneWithRows(messages)
-              })
-            })
-            .catch(function(error) {
-              alert(error);
-            })
-  }
+  // getJSON() {
+  //   return fetch(this.state.serverLink)
+  //           .then((messages) => {
+  //             messages = JSON.parse(messages._bodyInit);
+  //             this.setState({
+  //               textToInput: messages,
+  //               dataSource: this.ds.cloneWithRows(messages)
+  //             })
+  //           })
+  //           .catch(function(error) {
+  //             alert(error);
+  //           })
+  // }
 
 
 
@@ -78,6 +80,10 @@ class reactChat extends Component {
     this.socket.emit('message', { user: this.state.user, text: this.state.text });
     this.setState({ text: '' });
     dismissKeyboard();
+  }
+
+  formatDate(dateISO) {
+    return strftime('%T', new Date(dateISO));
   }
 
   render() {
@@ -90,13 +96,14 @@ class reactChat extends Component {
           })}
           dataSource={ this.state.dataSource }
           renderRow={ rowData => {
-              const user = rowData.user !== 'system' ? `${rowData.user}: ` : '';
-              const text = rowData.text;
-              return (
-                <Text style={{ fontSize: 14 }}>
-                  {user + text}
-                </Text>
-              )}} />
+            const date = rowData.created_at ? `${this.formatDate(rowData.created_at)} ` : '';
+            const user = rowData.user !== 'system' ? `${rowData.user}: ` : '';
+            const text = rowData.text;
+            return (
+              <Text style={{ fontSize: 14 }}>
+                {date + user + text}
+              </Text>
+            )}} />
         <View style={{ height: 40 }}>
           <View style={{ borderTopWidth: .5, borderTopColor: 'gray', flex: 1, flexDirection: 'row' }}>
             <TextInput
