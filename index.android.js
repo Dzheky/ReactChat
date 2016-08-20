@@ -13,15 +13,15 @@ import React, { Component } from 'react';
 import { AppRegistry, KeyboardAvoidingView, Text, TextInput, View, ScrollView, ListView } from 'react-native'
 import { Container, Content, Header, InputGroup, Input, Icon, Button } from 'native-base';
 import { Col, Row, Grid } from "react-native-easy-grid";
-import SocketCluster from 'socketcluster-client';
+import './UserAgent';
+import io from 'socket.io-client/socket.io';
 
 const dismissKeyboard = require('dismissKeyboard')
 
 class reactChat extends Component {
   constructor(props) {
     super(props);
-    var socket = socketCluster.connect();
-    socket.emit('message', {message: 'This is an object with a message property'});
+    this.socket = io('https://reactchat-dzheky.c9users.io:8080', { jsonp: false });
     this.ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     const welcomeMessage = {
       user: 'system',
@@ -37,20 +37,33 @@ class reactChat extends Component {
     };
     this.buttonPress = this.buttonPress.bind(this);
     this.getJSON = this.getJSON.bind(this);
+    this.addMessage = this.addMessage.bind(this);
+    this.socket.on('message', this.addMessage);
   }
 
   componentWillMount() {
-    this.getJSON(this.state.serverLink);
+    // this.getJSON(this.state.serverLink);
   }
 
-  getJSON(link) {
-    var self = this;
+  addMessage(message) {
+    let localMessages = [
+      ...this.state.textToInput,
+      message
+    ];
+    this.setState({
+      textToInput: localMessages,
+      dataSource: this.ds.cloneWithRows(localMessages)
+    });
+    this.listView.scrollTo({ y: localMessages.length * 50 });
+  }
+
+  getJSON() {
     return fetch(this.state.serverLink)
             .then((messages) => {
               messages = JSON.parse(messages._bodyInit);
-              self.setState({
+              this.setState({
                 textToInput: messages,
-                dataSource: self.ds.cloneWithRows(messages)
+                dataSource: this.ds.cloneWithRows(messages)
               })
             })
             .catch(function(error) {
@@ -62,20 +75,8 @@ class reactChat extends Component {
 
   buttonPress() {
     if (this.state.text.trim() === '') return;
-    const textToInput = [
-      ...this.state.textToInput,
-      {
-        user: this.state.user,
-        text: this.state.text
-      }
-    ];
-    this.setState({
-      textToInput: textToInput,
-      dataSource: this.ds.cloneWithRows(textToInput),
-      text: ''
-    });
-    this.listView.scrollTo({ y: textToInput.length * 50 });
-
+    this.socket.emit('message', { user: this.state.user, text: this.state.text });
+    this.setState({ text: '' });
     dismissKeyboard();
   }
 
