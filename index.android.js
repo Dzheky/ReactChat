@@ -8,10 +8,13 @@ import React, { Component } from 'react';
 import { AppRegistry, KeyboardAvoidingView, Text, TextInput, View, ScrollView, ListView } from 'react-native'
 import { Container, Content, Header, InputGroup, Input, Icon, Button } from 'native-base';
 import { Col, Row, Grid } from "react-native-easy-grid";
+import SocketCluster from 'socketcluster-client';
 
 class reactChat extends Component {
   constructor(props) {
     super(props);
+    var socket = socketCluster.connect();
+    socket.emit('message', {message: 'This is an object with a message property'});
     this.ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     const welcomeMessage = {
       user: 'system',
