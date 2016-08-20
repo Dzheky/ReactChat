@@ -1,13 +1,20 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- * @flow
+ * ReactChat is React Native App
+ * https://github.com/Dzheky/ReactChat
+ * Colaborators:
+ *  https://github.com/Eetin
+ *  https://github.com/MegaGM
+ *  https://github.com/Dzheky
+ *  ...
+ *
  */
 
 import React, { Component } from 'react';
 import { AppRegistry, KeyboardAvoidingView, Text, TextInput, View, ScrollView, ListView } from 'react-native'
 import { Container, Content, Header, InputGroup, Input, Icon, Button } from 'native-base';
 import { Col, Row, Grid } from "react-native-easy-grid";
+
+const dismissKeyboard = require('dismissKeyboard')
 
 class reactChat extends Component {
   constructor(props) {
@@ -21,11 +28,34 @@ class reactChat extends Component {
       placeholder: 'Enter message...',
       user: 'ReactChat User',
       text: '',
+      serverLink: 'https://reactchat-dzheky.c9users.io/',
       textToInput: [welcomeMessage],
       dataSource: this.ds.cloneWithRows([welcomeMessage])
     };
     this.buttonPress = this.buttonPress.bind(this);
+    this.getJSON = this.getJSON.bind(this);
   }
+
+  componentWillMount() {
+    this.getJSON(this.state.serverLink);
+  }
+
+  getJSON(link) {
+    var self = this;
+    return fetch(this.state.serverLink)
+            .then((messages) => {
+              messages = JSON.parse(messages._bodyInit);
+              self.setState({
+                textToInput: messages,
+                dataSource: self.ds.cloneWithRows(messages)
+              })
+            })
+            .catch(function(error) {
+              alert(error);
+            })
+  }
+
+
 
   buttonPress() {
     if (this.state.text.trim() === '') return;
@@ -42,6 +72,8 @@ class reactChat extends Component {
       text: ''
     });
     this.listView.scrollTo({ y: textToInput.length * 50 });
+
+    dismissKeyboard();
   }
 
   render() {
@@ -55,7 +87,7 @@ class reactChat extends Component {
           dataSource={ this.state.dataSource }
           renderRow={ rowData => {
               const user = rowData.user !== 'system' ? `${rowData.user}: ` : '';
-              const text = rowData.text; 
+              const text = rowData.text;
               return (
                 <Text style={{ fontSize: 14 }}>
                   {user + text}
@@ -65,6 +97,8 @@ class reactChat extends Component {
           <View style={{ borderTopWidth: .5, borderTopColor: 'gray', flex: 1, flexDirection: 'row' }}>
             <TextInput
               style={{ flex: 1 }}
+              onSubmitEditing={ this.buttonPress }
+              onEndEditing={this.clearFocus}
               onChangeText={ text => this.setState({ text }) }
               placeholder={this.state.placeholder}
               value={this.state.text} />
