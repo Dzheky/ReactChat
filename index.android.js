@@ -32,7 +32,7 @@ class reactChat extends Component {
       placeholder: 'Enter message...',
       user: 'ReactChat User',
       text: '',
-      serverLink: 'https://reactchat-dzheky.c9users.io/',
+      // serverLink: 'https://reactchat-dzheky.c9users.io/',
       textToInput: [welcomeMessage],
       dataSource: this.ds.cloneWithRows([welcomeMessage])
     };
@@ -52,11 +52,12 @@ class reactChat extends Component {
       ...this.state.textToInput,
       message
     ];
+    const ids = localMessages.map((message, i) => i).reverse();
     this.setState({
       textToInput: localMessages,
-      dataSource: this.ds.cloneWithRows(localMessages)
+      dataSource: this.ds.cloneWithRows(localMessages, ids)
     });
-    this.listView.scrollTo({ y: localMessages.length * 50 });
+    // this.listView.scrollTo({ y: this.listView.getMetrics().contentLength });
   }
 
   // getJSON() {
@@ -88,24 +89,27 @@ class reactChat extends Component {
 
   render() {
     return (
-      <View style={{ justifyContent: 'center', flex: 1 }}>
+      <View style={{ flex: 1 }}>
         <ListView ref={listView => this.listView = listView }
-          style={{ flex: 1 }}
-          onContentSizeChange={() => this.listView.scrollTo({
-             y: this.state.textToInput.length * 50
-          })}
+          style={{ margin: 10, transform: [{ scaleY: -1 }] }}
+          onContentSizeChange={(width, height) => {
+            this.listView.scrollTo({ y: 0 })
+          }}
           dataSource={ this.state.dataSource }
           renderRow={ rowData => {
             const date = rowData.created_at ? `${this.formatDate(rowData.created_at)} ` : '';
             const user = rowData.user !== 'system' ? `${rowData.user}: ` : '';
             const text = rowData.text;
             return (
-              <Text style={{ fontSize: 14 }}>
+              <Text style={{ fontSize: 14, transform: [{ scaleY: -1 }] }}>
                 {date + user + text}
               </Text>
             )}} />
         <View style={{ height: 40 }}>
-          <View style={{ borderTopWidth: .5, borderTopColor: 'gray', flex: 1, flexDirection: 'row' }}>
+          <View style={{ borderTopWidth: .5,
+            borderTopColor: 'gray',
+            flex: 1,
+            flexDirection: 'row' }}>
             <TextInput
               style={{ flex: 1 }}
               onSubmitEditing={ this.buttonPress }
