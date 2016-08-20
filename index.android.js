@@ -5,33 +5,73 @@
  */
 
 import React, { Component } from 'react';
-import {AppRegistry, Text, View} from 'react-native'
-import {Container, Content, Header, InputGroup, Input, Icon, Button  } from 'native-base';
+import { AppRegistry, KeyboardAvoidingView, Text, TextInput, View, ScrollView, ListView } from 'react-native'
+import { Container, Content, Header, InputGroup, Input, Icon, Button } from 'native-base';
+import { Col, Row, Grid } from "react-native-easy-grid";
 
 class reactChat extends Component {
   constructor(props) {
     super(props);
-    this.state = {text: '',
-                  textToInput: ''};
+    this.ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
+    const welcomeMessage = {
+      user: 'system',
+      text: 'Welcome to ReactChat!'
+    };
+    this.state = {
+      placeholder: 'Enter message...',
+      user: 'ReactChat User',
+      text: '',
+      textToInput: [welcomeMessage],
+      dataSource: this.ds.cloneWithRows([welcomeMessage])
+    };
     this.buttonPress = this.buttonPress.bind(this);
   }
+
   buttonPress() {
-    this.setState({textToInput: this.state.text});
+    if (this.state.text.trim() === '') return;
+    const textToInput = [
+      ...this.state.textToInput,
+      {
+        user: this.state.user,
+        text: this.state.text
+      }
+    ];
+    this.setState({
+      textToInput: textToInput,
+      dataSource: this.ds.cloneWithRows(textToInput),
+      text: ''
+    });
+    this.listView.scrollTo({ y: textToInput.length * 50 });
   }
+
   render() {
     return (
-      <Container>
-          <Content>
-              <InputGroup borderType='underline'>
-                  <Icon name="ios-home" style={{color:'#384850'}}/>
-                  <Input onChangeText={(text) => this.setState({text})} placeholder="Введите сообщение..."/>
-              </InputGroup>
-              <Button onPress={this.buttonPress}success>Отправить</Button>
-              <Text style={{padding: 10, fontSize: 42}}>
-                  {this.state.textToInput}
-              </Text>
-          </Content>
-      </Container>
+      <View style={{ justifyContent: 'center', flex: 1 }}>
+        <ListView ref={listView => this.listView = listView }
+          style={{ flex: 1 }}
+          onContentSizeChange={() => this.listView.scrollTo({
+             y: this.state.textToInput.length * 50
+          })}
+          dataSource={ this.state.dataSource }
+          renderRow={ rowData => {
+              const user = rowData.user !== 'system' ? `${rowData.user}: ` : '';
+              const text = rowData.text; 
+              return (
+                <Text style={{ fontSize: 14 }}>
+                  {user + text}
+                </Text>
+              )}} />
+        <View style={{ height: 40 }}>
+          <View style={{ borderTopWidth: .5, borderTopColor: 'gray', flex: 1, flexDirection: 'row' }}>
+            <TextInput
+              style={{ flex: 1 }}
+              onChangeText={ text => this.setState({ text }) }
+              placeholder={this.state.placeholder}
+              value={this.state.text} />
+            <Button onPress={ this.buttonPress } success>Send</Button>
+          </View>
+        </View>
+      </View>
     );
   }
 }
