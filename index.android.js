@@ -10,7 +10,9 @@
  */
 
 import React, { Component } from 'react';
-import { AppRegistry, KeyboardAvoidingView, Text, TextInput, View, ScrollView, ListView } from 'react-native'
+import {  AppRegistry, KeyboardAvoidingView, Text, TextInput,
+          View, ScrollView, ListView, ToolbarAndroid,
+          Modal} from 'react-native'
 import { Container, Content, Header, InputGroup, Input, Icon, Button } from 'native-base';
 import { Col, Row, Grid } from "react-native-easy-grid";
 import './UserAgent';
@@ -18,11 +20,12 @@ import io from 'socket.io-client/socket.io';
 import strftime from 'strftime';
 
 const dismissKeyboard = require('dismissKeyboard')
+const SERVER_URL = 'https://reactchat-server.herokuapp.com/'
 
 class reactChat extends Component {
   constructor(props) {
     super(props);
-    this.socket = io('https://reactchat-dzheky.c9users.io:8080', { jsonp: false });
+    this.socket = io(SERVER_URL, { jsonp: false });
     this.ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     const welcomeMessage = {
       user: 'system',
@@ -30,6 +33,9 @@ class reactChat extends Component {
     };
     this.state = {
       placeholder: 'Enter message...',
+      addUserInput: false,
+      actions: [{title: '', icon: require('./img/ic_person_add_black_24dp.png'), show: 'always'}],
+      userInput: '',
       user: 'ReactChat User',
       text: '',
       // serverLink: 'https://reactchat-dzheky.c9users.io/',
@@ -41,10 +47,11 @@ class reactChat extends Component {
     this.addMessage = this.addMessage.bind(this);
     this.socket.on('message', this.addMessage);
     this.formatDate = this.formatDate.bind(this);
+    this.toolbarActions = this.toolbarActions.bind(this);
   }
 
   // componentWillMount() {
-  //   this.getJSON(this.state.serverLink);
+  //
   // }
 
   addMessage(message) {
@@ -74,7 +81,11 @@ class reactChat extends Component {
   //           })
   // }
 
-
+  toolbarActions(position) {
+    if(position === 0){ //Name register
+      this.setState({addUserInput: true});
+    }
+  }
 
   buttonPress() {
     if (this.state.text.trim() === '') return;
@@ -88,23 +99,74 @@ class reactChat extends Component {
   }
 
   render() {
+    var modalBackgroundStyle = {
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      flex: 1,
+      paddingTop: 150,
+      padding: 20
+    };
+    var innerContainerTransparentStyle = {
+      backgroundColor: '#fff',
+      padding: 20,
+      borderRadius: 10,
+      alignItems: 'center'
+    }
     return (
       <View style={{ flex: 1 }}>
-        <ListView ref={listView => this.listView = listView }
-          style={{ margin: 10, transform: [{ scaleY: -1 }] }}
-          onContentSizeChange={(width, height) => {
-            this.listView.scrollTo({ y: 0 })
-          }}
-          dataSource={ this.state.dataSource }
-          renderRow={ rowData => {
-            const date = rowData.created_at ? `${this.formatDate(rowData.created_at)} ` : '';
-            const user = rowData.user !== 'system' ? `${rowData.user}: ` : '';
-            const text = rowData.text;
-            return (
-              <Text style={{ fontSize: 14, transform: [{ scaleY: -1 }] }}>
-                {date + user + text}
-              </Text>
-            )}} />
+          <Modal
+            animationType={'fade'}
+            transparent={true}
+            visible={this.state.addUserInput}
+            onRequestClose={() => {this.setState({addUserInput: false})}}
+            >
+              <View style={modalBackgroundStyle}>
+                <View style={innerContainerTransparentStyle}>
+                    <Text>Register Username:</Text>
+                    <TextInput
+                      style={{ width: 250}}
+                      onSubmitEditing={ this.buttonPress }
+                      onEndEditing={this.clearFocus}
+                      onChangeText={ user => {
+                        if(user === '') {
+                          this.setState({userInput: 'ReactChat User'});
+                        } else {
+                          this.setState({userInput: user});
+                        }
+                      } }
+                      placeholder={'Your username'}
+                      />
+                      <View style={{flex: 1, flexDirection: 'row'}}>
+                        <Button onPress={()=> this.setState({user: this.state.userInput, addUserInput: false, actions: []})} transparent>OK</Button>
+                        <Button onPress={()=> this.setState({addUserInput: false})} transparent>Cancel</Button>
+                      </View>
+                  </View>
+                </View>
+            </Modal>
+          <ToolbarAndroid
+            navIcon={require('./img/ic_menu_black_24dp.png')}
+            title="React Chat"
+            actions={this.state.actions}
+            style={{
+             	height: 56,
+              backgroundColor: '#e9eaed'
+            }}
+            onActionSelected={this.toolbarActions}
+          />
+          <ListView ref={listView => this.listView = listView }
+            style={{ margin: 10, transform: [{ scaleY: -1 }] }}
+            onContentSizeChange={(width, height) => {
+              this.listView.scrollTo({ y: 0 })
+            }}
+            dataSource={ this.state.dataSource }
+            renderRow={ rowData => {
+              const date = rowData.created_at ? `${this.formatDate(rowData.created_at)} ` : '';
+              const user = rowData.user !== 'system' ? `${rowData.user}: ` : '';
+              const text = rowData.text;
+              return (
+                <Text style={{ fontSize: 14, transform: [{ scaleY: -1 }] }}>
+                  {date + user + text}
+                </Text>
+              )}} />
         <View style={{ height: 40 }}>
           <View style={{ borderTopWidth: .5,
             borderTopColor: 'gray',
