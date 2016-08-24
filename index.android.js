@@ -19,7 +19,8 @@ import './UserAgent';
 import io from 'socket.io-client/socket.io';
 import strftime from 'strftime';
 
-const dismissKeyboard = require('dismissKeyboard')
+const dismissKeyboard = require('dismissKeyboard');
+const DeviceInfo = require('react-native-device-info');
 const SERVER_URL = 'https://reactchat-server.herokuapp.com/'
 
 class reactChat extends Component {
@@ -67,19 +68,17 @@ class reactChat extends Component {
     // this.listView.scrollTo({ y: this.listView.getMetrics().contentLength });
   }
 
-  // getJSON() {
-  //   return fetch(this.state.serverLink)
-  //           .then((messages) => {
-  //             messages = JSON.parse(messages._bodyInit);
-  //             this.setState({
-  //               textToInput: messages,
-  //               dataSource: this.ds.cloneWithRows(messages)
-  //             })
-  //           })
-  //           .catch(function(error) {
-  //             alert(error);
-  //           })
-  // }
+  sendUser(user) {
+    let userJSON = {userName: user, userID: DeviceInfo.getUniqueID()}
+    this.socket.emmit('user', userJSON)
+    this.socket.on('user', result => {
+      if(result.message !== true) {
+        alert(result.message);
+      } else {
+        this.setState({user: this.state.userInput, addUserInput: false, actions: []})
+      }
+    })
+  }
 
   toolbarActions(position) {
     if(position === 0){ //Name register
@@ -136,7 +135,7 @@ class reactChat extends Component {
                       placeholder={'Your username'}
                       />
                       <View style={{flex: 1, flexDirection: 'row'}}>
-                        <Button onPress={()=> this.setState({user: this.state.userInput, addUserInput: false, actions: []})} transparent>OK</Button>
+                        <Button onPress={this.sendUser(this.state.userInput)} transparent>OK</Button>
                         <Button onPress={()=> this.setState({addUserInput: false})} transparent>Cancel</Button>
                       </View>
                   </View>
