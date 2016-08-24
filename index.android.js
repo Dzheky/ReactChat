@@ -20,13 +20,16 @@ import io from 'socket.io-client/socket.io';
 import strftime from 'strftime';
 
 const dismissKeyboard = require('dismissKeyboard');
-const DeviceInfo = require('react-native-device-info');
+// const DeviceUUID = require("react-native-device-uuid");
+// let DeviceUUIDNumber = 0;
+
 const SERVER_URL = 'https://reactchat-server.herokuapp.com/'
+
 
 class reactChat extends Component {
   constructor(props) {
     super(props);
-    this.socket = io(SERVER_URL, { jsonp: false });
+    this.socket = io(SERVER_URL, { jsonp: false , uuid: 0});
     this.ds = new ListView.DataSource({rowHasChanged: (r1, r2) => r1 !== r2});
     const welcomeMessage = {
       user: 'system',
@@ -44,15 +47,20 @@ class reactChat extends Component {
       dataSource: this.ds.cloneWithRows([welcomeMessage])
     };
     this.buttonPress = this.buttonPress.bind(this);
-    // this.getJSON = this.getJSON.bind(this);
     this.addMessage = this.addMessage.bind(this);
     this.socket.on('message', this.addMessage);
     this.formatDate = this.formatDate.bind(this);
     this.toolbarActions = this.toolbarActions.bind(this);
+    this.sendUser = this.sendUser.bind(this);
   }
 
-  // componentWillMount() {
-  //
+  // componentDidMount() {
+  //   DeviceUUID.getUUID().then((uuid) => {
+  //     DeviceUUIDNumber = uuid;
+  //     alert(DeviceUUIDNumber)
+  //   }).catch((err) => {
+  //     alert(err);
+  //   });
   // }
 
   addMessage(message) {
@@ -69,8 +77,8 @@ class reactChat extends Component {
   }
 
   sendUser(user) {
-    let userJSON = {userName: user, userID: DeviceInfo.getUniqueID()}
-    this.socket.emmit('user', userJSON)
+    let userJSON = {userName: user, userID: 0}
+    this.socket.emit('user', userJSON)
     this.socket.on('user', result => {
       if(result.message !== true) {
         alert(result.message);
@@ -135,7 +143,7 @@ class reactChat extends Component {
                       placeholder={'Your username'}
                       />
                       <View style={{flex: 1, flexDirection: 'row'}}>
-                        <Button onPress={this.sendUser(this.state.userInput)} transparent>OK</Button>
+                        <Button onPress={()=> {this.sendUser(this.state.userInput)}} transparent>OK</Button>
                         <Button onPress={()=> this.setState({addUserInput: false})} transparent>Cancel</Button>
                       </View>
                   </View>
