@@ -20,7 +20,7 @@ import io from 'socket.io-client/socket.io';
 import strftime from 'strftime';
 
 const dismissKeyboard = require('dismissKeyboard');
-// const DeviceUUID = require("react-native-device-uuid");
+var AppInfo = require('react-native-app-info');
 // let DeviceUUIDNumber = 0;
 
 const SERVER_URL = 'https://reactchat-server.herokuapp.com/'
